@@ -1,5 +1,15 @@
 import { useState, useMemo } from 'react'
-import { Calendar, Check, X as XIcon, ChevronLeft, ChevronRight, Users, MapPin, Clock, ArrowLeft, ArrowRight as ArrowRightIcon, Lock } from 'lucide-react'
+import { Calendar, Check, X as XIcon, ChevronLeft, ChevronRight, Users, MapPin, Clock, ArrowLeft, ArrowRight as ArrowRightIcon, Lock, Copy, ExternalLink } from 'lucide-react'
+
+// ============ CONFIGURAÇÃO DE PAGAMENTO ============
+// Substituir por link real do Mercado Pago quando disponível
+const MERCADO_PAGO_LINK = 'https://mpago.la/casamaripioca'
+// Chave PIX para pagamento direto (alternativa)
+const PIX_CHAVE = 'contato@casamaripioca.com.br'
+const PIX_TITULAR = 'Casa Mar Ipioca Eventos'
+// E-mail para onde a reserva é enviada
+const EMAIL_RECEBEDOR = 'zepedrascarneiro@gmail.com'
+// ====================================================
 
 // Datas já reservadas (ficará vermelho)
 const RESERVADAS = [
@@ -233,29 +243,89 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
     e.preventDefault()
     setSending(true)
 
+    const protocolo = `CMI-${Date.now().toString(36).toUpperCase()}`
+    const validadeReserva = new Date()
+    validadeReserva.setHours(validadeReserva.getHours() + 48)
+
+    // Contrato Prévio de Reserva (enviado por e-mail)
+    const contratoPrevio = [
+      '═══════════════════════════════════════',
+      '   CONTRATO PRÉVIO DE RESERVA',
+      '   CASA MAR IPIOCA — EVENTOS',
+      '═══════════════════════════════════════',
+      '',
+      `Protocolo: ${protocolo}`,
+      `Emitido em: ${new Date().toLocaleString('pt-BR')}`,
+      '',
+      '━━━ DADOS DO(A) CONTRATANTE ━━━',
+      `Nome: ${form.nome}`,
+      `E-mail: ${form.email}`,
+      `WhatsApp: ${form.telefone}`,
+      '',
+      '━━━ DETALHES DO EVENTO ━━━',
+      `Pacote: ${pkg.nome}`,
+      `Capacidade: até ${pkg.maxGuests} convidados`,
+      `Data escolhida: ${formatDateBR(selectedDate)}`,
+      `Temporada: ${TIERS[tier].label}`,
+      `Local: Casa Mar Ipioca — Praia de Ipioca, Maceió/AL`,
+      '',
+      '━━━ VALORES ━━━',
+      `Valor total estimado: ${formatCurrency(totalPrice)}`,
+      `SINAL para reserva (20%): ${formatCurrency(sinal)}`,
+      `Saldo no dia do evento: ${formatCurrency(totalPrice - sinal)}`,
+      '',
+      '━━━ CONDIÇÕES DE RESERVA ━━━',
+      '1. Esta reserva é PROVISÓRIA e fica válida por 48 horas.',
+      `   Expira em: ${validadeReserva.toLocaleString('pt-BR')}`,
+      '2. A data só será bloqueada EXCLUSIVAMENTE após confirmação',
+      '   do pagamento do sinal.',
+      '3. Formas de pagamento:',
+      `   • PIX: ${PIX_CHAVE}`,
+      `   • Mercado Pago: ${MERCADO_PAGO_LINK}`,
+      '4. Após a confirmação do sinal, será emitido o contrato',
+      '   definitivo com todos os detalhes, itens inclusos, cláusulas',
+      '   de cancelamento e cronograma.',
+      '5. Observações do cliente:',
+      `   ${form.mensagem || '(nenhuma)'}`,
+      '',
+      '━━━ PRÓXIMOS PASSOS ━━━',
+      '→ Efetue o pagamento do sinal nas próximas 48h.',
+      '→ Envie o comprovante para o WhatsApp: +55 82 98833-0033',
+      '→ Aguarde o contrato definitivo (até 24h após o comprovante).',
+      '',
+      'Casa Mar Ipioca | casamaripioca.com.br',
+      'Praia de Ipioca — Maceió/AL',
+      '═══════════════════════════════════════',
+    ].join('\n')
+
     const data = {
       nome: form.nome,
       email: form.email,
       telefone: form.telefone,
-      mensagem: form.mensagem,
+      mensagem: form.mensagem || '(sem observação)',
       pacote: pkg.nome,
       data_evento: formatDateBR(selectedDate),
+      temporada: TIERS[tier].label,
       preco_total: formatCurrency(totalPrice),
       sinal: formatCurrency(sinal),
-      _subject: `Nova Reserva Casa Mar — ${pkg.nome} — ${formatDateBR(selectedDate)}`,
+      saldo: formatCurrency(totalPrice - sinal),
+      protocolo,
+      contrato_previo: contratoPrevio,
+      _subject: `Nova Reserva Casa Mar — ${pkg.nome} — ${formatDateBR(selectedDate)} [${protocolo}]`,
       _template: 'box',
       _captcha: 'false',
+      _cc: form.email, // envia cópia ao cliente também
     }
 
     try {
-      await fetch('https://formsubmit.co/ajax/zepedrascarneiro@gmail.com', {
+      await fetch(`https://formsubmit.co/ajax/${EMAIL_RECEBEDOR}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(data),
       })
-      onConfirm(data)
+      onConfirm({ ...data, sinal_valor: sinal, data_evento_obj: selectedDate })
     } catch (err) {
-      alert('Erro ao enviar. Tente pelo WhatsApp.')
+      alert('Erro ao enviar. Tente pelo WhatsApp: +55 82 98833-0033')
       setSending(false)
     }
   }
@@ -289,7 +359,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
           <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Valor total estimado</span>
           <span style={{ color: 'var(--navy)', fontSize: '1.3rem', fontFamily: 'var(--serif)' }}>{formatCurrency(totalPrice)}</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '20px 0 0', background: 'rgba(212,184,140,0.15)', margin: '16px -20px 0', padding: '24px 20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', background: 'rgba(212,184,140,0.15)', margin: '16px -20px 0', padding: '24px 20px' }}>
           <div>
             <span style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold-dark)', display: 'block', marginBottom: '4px' }}>Sinal para reservar</span>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>20% do valor total · restante no evento</span>
@@ -318,8 +388,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
         <div style={{ background: 'rgba(212,184,140,0.1)', border: '1px solid rgba(212,184,140,0.3)', padding: '20px', display: 'flex', gap: '14px', alignItems: 'flex-start', marginTop: '8px' }}>
           <Lock size={18} style={{ color: 'var(--gold-dark)', flexShrink: 0, marginTop: '2px' }} />
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.7 }}>
-            Ao confirmar, você será redirecionado para o pagamento do sinal via <strong style={{ color: 'var(--navy)' }}>Mercado Pago</strong>.
-            Após a confirmação, você receberá por e-mail o <strong style={{ color: 'var(--navy)' }}>contrato prévio de reserva</strong> com sua data bloqueada exclusivamente.
+            Ao confirmar, você receberá por e-mail o <strong style={{ color: 'var(--navy)' }}>contrato prévio de reserva</strong> com seu protocolo único e as instruções de pagamento do sinal (Mercado Pago ou PIX). Sua data fica pré-reservada por 48 horas.
           </p>
         </div>
 
@@ -332,7 +401,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
           }}
           onMouseEnter={e => { if (!sending) e.currentTarget.style.background = 'var(--navy-soft)' }}
           onMouseLeave={e => { if (!sending) e.currentTarget.style.background = 'var(--navy)' }}>
-          {sending ? 'Processando...' : `Pagar sinal de ${formatCurrency(sinal)} e reservar`}
+          {sending ? 'Processando...' : `Confirmar reserva · Sinal ${formatCurrency(sinal)}`}
         </button>
       </form>
     </div>
@@ -351,35 +420,118 @@ const inputStyle = {
 }
 
 function SuccessScreen({ data, onReset }) {
+  const [copiado, setCopiado] = useState(false)
+
+  const copiarPix = () => {
+    navigator.clipboard.writeText(PIX_CHAVE).then(() => {
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2400)
+    })
+  }
+
   return (
-    <div style={{ textAlign: 'center', padding: '40px 24px', maxWidth: '640px', margin: '0 auto' }}>
-      <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(143,165,134,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px' }}>
-        <Check size={36} style={{ color: '#8fa586' }} />
+    <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 8px' }}>
+      {/* Sucesso */}
+      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(143,165,134,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px' }}>
+          <Check size={36} style={{ color: '#8fa586' }} />
+        </div>
+        <h3 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontFamily: 'var(--serif)', color: 'var(--navy)', marginBottom: '20px', fontWeight: 300, fontStyle: 'italic' }}>
+          Reserva pré-confirmada
+        </h3>
+        <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, fontSize: '1.05rem' }}>
+          Pacote <strong style={{ color: 'var(--navy)' }}>{data.pacote}</strong> · Data <strong style={{ color: 'var(--navy)' }}>{data.data_evento}</strong>
+        </p>
+        <p style={{ fontSize: '12px', letterSpacing: '2px', color: 'var(--gold-dark)', marginTop: '16px', fontWeight: 600 }}>
+          PROTOCOLO: {data.protocolo}
+        </p>
       </div>
-      <h3 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontFamily: 'var(--serif)', color: 'var(--navy)', marginBottom: '20px', fontWeight: 300, fontStyle: 'italic' }}>
-        Solicitação recebida!
-      </h3>
-      <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '32px', fontSize: '1.05rem' }}>
-        Recebemos sua solicitação de reserva para o pacote <strong style={{ color: 'var(--navy)' }}>{data.pacote}</strong> na data <strong style={{ color: 'var(--navy)' }}>{data.data_evento}</strong>.
-      </p>
-      <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '40px' }}>
-        Em instantes você receberá um e-mail com:
-      </p>
-      <ul style={{ listStyle: 'none', padding: 0, marginBottom: '48px', display: 'inline-block', textAlign: 'left' }}>
-        {['Link de pagamento do sinal via Mercado Pago', 'Contrato prévio de reserva', 'Próximos passos e documentação'].map((item, i) => (
-          <li key={i} style={{ padding: '10px 0', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text)' }}>
-            <Check size={16} style={{ color: 'var(--gold-dark)' }} />
-            {item}
-          </li>
-        ))}
-      </ul>
-      <p style={{ fontSize: '13px', color: 'var(--text-subtle)', marginBottom: '32px' }}>
-        Verifique sua caixa de entrada e a caixa de spam.
-      </p>
-      <button onClick={onReset}
-        style={{ padding: '16px 40px', background: 'transparent', color: 'var(--navy)', border: '1px solid var(--navy)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer' }}>
-        Nova simulação
-      </button>
+
+      {/* Valor do sinal em destaque */}
+      <div style={{ background: 'var(--navy)', color: '#fff', padding: 'clamp(28px, 4vw, 40px)', textAlign: 'center', marginBottom: '32px' }}>
+        <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '12px' }}>
+          Sinal para bloquear sua data
+        </p>
+        <p style={{ fontSize: 'clamp(2.5rem, 6vw, 3.5rem)', fontFamily: 'var(--serif)', fontWeight: 500, marginBottom: '8px' }}>
+          {data.sinal}
+        </p>
+        <p style={{ fontSize: '13px', opacity: 0.7, letterSpacing: '1px' }}>
+          Pagamento em até 48 horas · Saldo {data.saldo} no dia do evento
+        </p>
+      </div>
+
+      {/* Pagamento */}
+      <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', padding: 'clamp(24px, 4vw, 40px)', marginBottom: '24px' }}>
+        <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '20px', fontWeight: 600 }}>
+          Como pagar
+        </p>
+
+        {/* Mercado Pago */}
+        <a href={MERCADO_PAGO_LINK} target="_blank" rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
+            padding: '20px 24px', background: '#009ee3', color: '#fff',
+            textDecoration: 'none', marginBottom: '16px', transition: 'opacity 0.2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+          <div>
+            <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.85, marginBottom: '4px' }}>
+              Opção 1 · Cartão, boleto, PIX
+            </p>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>Pagar com Mercado Pago</p>
+          </div>
+          <ExternalLink size={22} />
+        </a>
+
+        {/* PIX */}
+        <div style={{ padding: '20px 24px', background: 'var(--cream)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' }}>
+            Opção 2 · PIX direto
+          </p>
+          <p style={{ fontSize: '0.95rem', color: 'var(--navy)', marginBottom: '14px' }}>
+            Titular: <strong>{PIX_TITULAR}</strong>
+          </p>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'stretch', flexWrap: 'wrap' }}>
+            <code style={{ flex: '1 1 240px', padding: '14px 16px', background: '#fff', border: '1px solid rgba(0,0,0,0.1)', fontFamily: 'monospace', fontSize: '14px', color: 'var(--navy)', wordBreak: 'break-all' }}>
+              {PIX_CHAVE}
+            </code>
+            <button onClick={copiarPix}
+              style={{
+                padding: '14px 20px', background: copiado ? '#8fa586' : 'var(--navy)',
+                color: '#fff', fontSize: '11px', letterSpacing: '2px',
+                textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: '8px', border: 'none',
+              }}>
+              {copiado ? <><Check size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
+            </button>
+          </div>
+        </div>
+
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.7, marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          Após o pagamento, envie o <strong style={{ color: 'var(--navy)' }}>comprovante pelo WhatsApp <a href="https://wa.me/5582988330033" style={{ color: 'var(--gold-dark)' }}>+55 82 98833-0033</a></strong> citando o protocolo acima. Em até 24h você recebe o contrato definitivo.
+        </p>
+      </div>
+
+      {/* Contrato enviado */}
+      <div style={{ background: 'rgba(212,184,140,0.1)', border: '1px solid rgba(212,184,140,0.3)', padding: '24px', marginBottom: '32px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+        <Check size={20} style={{ color: 'var(--gold-dark)', flexShrink: 0, marginTop: '2px' }} />
+        <div>
+          <p style={{ fontSize: '14px', color: 'var(--navy)', fontWeight: 600, marginBottom: '4px' }}>
+            Contrato prévio enviado por e-mail
+          </p>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.7 }}>
+            Uma cópia com todos os detalhes da reserva, condições e instruções foi enviada para <strong>{data.email}</strong>. Verifique também a caixa de spam.
+          </p>
+        </div>
+      </div>
+
+      <div style={{ textAlign: 'center' }}>
+        <button onClick={onReset}
+          style={{ padding: '16px 40px', background: 'transparent', color: 'var(--navy)', border: '1px solid var(--navy)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer' }}>
+          Nova simulação
+        </button>
+      </div>
     </div>
   )
 }
