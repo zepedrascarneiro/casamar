@@ -1,0 +1,61 @@
+:root {
+  --ivory: #faf7f2;
+  --cream: #f5efe6;
+  --sand: #e8dcc5;
+  --taupe: #c9b79a;
+  --gold: #d4b88c;
+  --gold-dark: #b89968;
+  --navy: #1a2332;
+  --navy-soft: #2a3a4d;
+  --charcoal: #2d2d2d;
+  --text: #3d3d3d;
+  --text-muted: #6b6b6b;
+  --text-subtle: #9a9a9a;
+  --serif: 'Cormorant Garamond', 'Georgia', serif;
+  --sans: 'Montserrat', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  color: var(--text);
+  background: var(--ivory);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+h1, h2, h3, h4, h5 { font-family: var(--serif); font-weight: 400; letter-spacing: 0.5px; }
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+::selection { background: var(--gold); color: var(--navy); }
+
+/* Smooth fade in on scroll */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 1.2s ease forwards; }
+
+@keyframes kenBurns {
+  0% { transform: scale(1.05); }
+  100% { transform: scale(1.12); }
+}
+
+.parallax-bg {
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 768px) {
+  .parallax-bg { background-attachment: scroll; }
+}
