@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Menu, X, MessageCircle, MapPin, Instagram, ChevronDown } from 'lucide-react'
+import { Menu, X, MessageCircle, MapPin, Instagram, ChevronDown, Calendar } from 'lucide-react'
+import BookingSystem from './BookingSystem.jsx'
 
 const WHATSAPP = 'https://api.whatsapp.com/send?phone=5582988330033&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20a%20Casa%20Mar%20Ipioca.'
 const WHATSAPP_NUMBER = '+55 82 98833-0033'
@@ -9,6 +10,7 @@ const sections = [
   { id: 'capela', label: 'Capela' },
   { id: 'salao', label: 'Salão' },
   { id: 'pacotes', label: 'Pacotes' },
+  { id: 'reservar', label: 'Reservar' },
   { id: 'galeria', label: 'Galeria' },
   { id: 'contato', label: 'Contato' },
 ]
@@ -85,12 +87,12 @@ function Nav({ active }) {
               {s.label}
             </button>
           ))}
-          <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
-            style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 500, padding: '12px 24px', border: `1px solid ${scrolled ? 'var(--navy)' : '#fff'}`, color: scrolled ? 'var(--navy)' : '#fff', transition: 'all 0.3s' }}
+          <button onClick={() => scrollTo('reservar')}
+            style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 500, padding: '12px 24px', border: `1px solid ${scrolled ? 'var(--navy)' : '#fff'}`, color: scrolled ? 'var(--navy)' : '#fff', background: 'transparent', transition: 'all 0.3s' }}
             onMouseEnter={e => { e.currentTarget.style.background = scrolled ? 'var(--navy)' : '#fff'; e.currentTarget.style.color = scrolled ? '#fff' : 'var(--navy)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = scrolled ? 'var(--navy)' : '#fff' }}>
-            Reservar Visita
-          </a>
+            Reservar Data
+          </button>
         </nav>
 
         <button onClick={() => setOpen(!open)} className="mobile-menu" style={{ display: 'none', color: scrolled ? 'var(--navy)' : '#fff' }}>
@@ -106,10 +108,10 @@ function Nav({ active }) {
               {s.label}
             </button>
           ))}
-          <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
-            style={{ display: 'block', marginTop: '16px', padding: '16px', textAlign: 'center', background: 'var(--navy)', color: '#fff', fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-            Reservar Visita
-          </a>
+          <button onClick={() => scrollTo('reservar')}
+            style={{ display: 'block', width: '100%', marginTop: '16px', padding: '16px', textAlign: 'center', background: 'var(--navy)', color: '#fff', fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase', border: 'none' }}>
+            Reservar Data
+          </button>
         </div>
       )}
 
@@ -150,16 +152,16 @@ function Hero() {
             à beira-mar
           </h1>
           <p style={{ fontSize: 'clamp(1rem, 1.4vw, 1.15rem)', maxWidth: '560px', margin: '0 auto 48px', opacity: 0.9, fontWeight: 300, lineHeight: 1.8 }}>
-            Uma villa histórica, uma capela centenária e um salão de eventos.
+            Uma villa histórica, uma capela à beira-mar e um salão de eventos.
             Três cenários únicos no mesmo paraíso, prontos para receber o dia mais importante da sua vida.
           </p>
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
-              style={{ padding: '18px 44px', background: 'var(--gold)', color: 'var(--navy)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, transition: 'all 0.3s' }}
+            <button onClick={() => document.querySelector('#reservar')?.scrollIntoView({ behavior: 'smooth' })}
+              style={{ padding: '18px 44px', background: 'var(--gold)', color: 'var(--navy)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.3s' }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--gold-dark)'}
               onMouseLeave={e => e.currentTarget.style.background = 'var(--gold)'}>
-              Solicitar Orçamento
-            </a>
+              Reservar Minha Data
+            </button>
             <button onClick={() => document.querySelector('#villa')?.scrollIntoView({ behavior: 'smooth' })}
               style={{ padding: '18px 44px', background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 500, transition: 'all 0.3s' }}
               onMouseEnter={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--navy)' }}
@@ -293,12 +295,12 @@ function Pacotes() {
                   </li>
                 ))}
               </ul>
-              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'block', textAlign: 'center', padding: '16px', background: p.destaque ? 'var(--gold)' : 'transparent', color: p.destaque ? 'var(--navy)' : '#fff', border: p.destaque ? 'none' : '1px solid rgba(255,255,255,0.3)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, transition: 'all 0.3s' }}
+              <button onClick={() => document.querySelector('#reservar')?.scrollIntoView({ behavior: 'smooth' })}
+                style={{ display: 'block', width: '100%', textAlign: 'center', padding: '16px', background: p.destaque ? 'var(--gold)' : 'transparent', color: p.destaque ? 'var(--navy)' : '#fff', border: p.destaque ? 'none' : '1px solid rgba(255,255,255,0.3)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer', transition: 'all 0.3s' }}
                 onMouseEnter={e => { if (!p.destaque) { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--navy)' } else { e.currentTarget.style.background = 'var(--gold-dark)' }}}
                 onMouseLeave={e => { if (!p.destaque) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#fff' } else { e.currentTarget.style.background = 'var(--gold)' }}}>
-                Solicitar Orçamento
-              </a>
+                Ver Datas Disponíveis
+              </button>
             </div>
           ))}
         </div>
@@ -504,6 +506,8 @@ export default function App() {
       <Parallax />
 
       <Pacotes />
+
+      <BookingSystem />
 
       <Galeria />
 
