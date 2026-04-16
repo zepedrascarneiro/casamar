@@ -466,6 +466,16 @@ function FloatingWhatsApp() {
 }
 
 export default function App() {
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+    if (window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+    window.scrollTo(0, 0)
+  }, [])
+
   return (
     <>
       <Nav />
