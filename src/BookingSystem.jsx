@@ -1,12 +1,15 @@
 import { useState, useMemo } from 'react'
-import { Calendar, Check, X as XIcon, ChevronLeft, ChevronRight, Users, MapPin, Clock, ArrowLeft, ArrowRight as ArrowRightIcon, Lock, Copy, ExternalLink } from 'lucide-react'
+import { Calendar, Check, X as XIcon, ChevronLeft, ChevronRight, Users, MapPin, Clock, ArrowLeft, ArrowRight as ArrowRightIcon, Lock, Copy } from 'lucide-react'
 
 // ============ CONFIGURAÇÃO DE PAGAMENTO ============
-// Substituir por link real do Mercado Pago quando disponível
-const MERCADO_PAGO_LINK = 'https://mpago.la/casamaripioca'
-// Chave PIX para pagamento direto (alternativa)
-const PIX_CHAVE = 'contato@casamaripioca.com.br'
-const PIX_TITULAR = 'Casa Mar Ipioca Eventos'
+// Taxa fixa de reserva em R$ (abatida do valor total do evento)
+const TAXA_RESERVA = 1000
+// Chave PIX (CNPJ)
+const PIX_CHAVE = '52846555000152'
+const PIX_CHAVE_FORMATADA = '52.846.555/0001-52'
+const PIX_TITULAR = 'Praia Cervejeira Ipioca'
+// Prazo (meses antes do evento) para reembolso integral em caso de cancelamento
+const REEMBOLSO_MESES = 6
 // E-mail para onde a reserva é enviada
 const EMAIL_RECEBEDOR = 'zepedrascarneiro@gmail.com'
 // ====================================================
@@ -237,7 +240,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
   const pkg = PACOTES_PRECO[selectedPackage]
   const tier = getTier(selectedDate)
   const totalPrice = pkg.base * TIERS[tier].mult
-  const sinal = totalPrice * 0.2
+  const sinal = TAXA_RESERVA // taxa fixa, abatida do valor final
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -246,6 +249,10 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
     const protocolo = `CMI-${Date.now().toString(36).toUpperCase()}`
     const validadeReserva = new Date()
     validadeReserva.setHours(validadeReserva.getHours() + 48)
+
+    // Data limite para reembolso integral (6 meses antes do evento)
+    const limiteReembolso = new Date(selectedDate)
+    limiteReembolso.setMonth(limiteReembolso.getMonth() - REEMBOLSO_MESES)
 
     // Contrato Prévio de Reserva (enviado por e-mail)
     const contratoPrevio = [
@@ -270,26 +277,31 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
       `Local: Casa Mar Ipioca — Praia de Ipioca, Maceió/AL`,
       '',
       '━━━ VALORES ━━━',
-      `Valor total estimado: ${formatCurrency(totalPrice)}`,
-      `SINAL para reserva (20%): ${formatCurrency(sinal)}`,
+      `Valor estimado do evento: ${formatCurrency(totalPrice)}`,
+      `TAXA DE RESERVA (fixa): ${formatCurrency(sinal)}`,
+      `→ Esta taxa é ABATIDA do valor total do evento.`,
       `Saldo no dia do evento: ${formatCurrency(totalPrice - sinal)}`,
+      '',
+      '━━━ PAGAMENTO (somente PIX) ━━━',
+      `Chave PIX (CNPJ): ${PIX_CHAVE_FORMATADA}`,
+      `Titular: ${PIX_TITULAR}`,
       '',
       '━━━ CONDIÇÕES DE RESERVA ━━━',
       '1. Esta reserva é PROVISÓRIA e fica válida por 48 horas.',
       `   Expira em: ${validadeReserva.toLocaleString('pt-BR')}`,
-      '2. A data só será bloqueada EXCLUSIVAMENTE após confirmação',
-      '   do pagamento do sinal.',
-      '3. Formas de pagamento:',
-      `   • PIX: ${PIX_CHAVE}`,
-      `   • Mercado Pago: ${MERCADO_PAGO_LINK}`,
-      '4. Após a confirmação do sinal, será emitido o contrato',
-      '   definitivo com todos os detalhes, itens inclusos, cláusulas',
-      '   de cancelamento e cronograma.',
-      '5. Observações do cliente:',
+      '2. A data só será bloqueada EXCLUSIVAMENTE após a confirmação',
+      '   do pagamento da taxa de reserva (PIX).',
+      `3. REEMBOLSO: em caso de cancelamento solicitado até`,
+      `   ${limiteReembolso.toLocaleDateString('pt-BR')} (${REEMBOLSO_MESES} meses antes do evento),`,
+      '   a taxa de reserva será reembolsada INTEGRALMENTE.',
+      '   Cancelamentos após essa data não são reembolsáveis.',
+      '4. Após a confirmação do pagamento será emitido o contrato',
+      '   definitivo com todos os detalhes, itens inclusos e cronograma.',
+      '5. Observações do(a) contratante:',
       `   ${form.mensagem || '(nenhuma)'}`,
       '',
       '━━━ PRÓXIMOS PASSOS ━━━',
-      '→ Efetue o pagamento do sinal nas próximas 48h.',
+      '→ Efetue o PIX da taxa de reserva nas próximas 48 horas.',
       '→ Envie o comprovante para o WhatsApp: +55 82 98833-0033',
       '→ Aguarde o contrato definitivo (até 24h após o comprovante).',
       '',
@@ -356,13 +368,13 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
           <span style={{ color: TIERS[tier].color, fontWeight: 600, fontSize: '13px', letterSpacing: '1px', textTransform: 'uppercase' }}>{TIERS[tier].label}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '16px 0', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Valor total estimado</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Valor estimado do evento</span>
           <span style={{ color: 'var(--navy)', fontSize: '1.3rem', fontFamily: 'var(--serif)' }}>{formatCurrency(totalPrice)}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', background: 'rgba(212,184,140,0.15)', margin: '16px -20px 0', padding: '24px 20px' }}>
           <div>
-            <span style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold-dark)', display: 'block', marginBottom: '4px' }}>Sinal para reservar</span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>20% do valor total · restante no evento</span>
+            <span style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold-dark)', display: 'block', marginBottom: '4px' }}>Taxa de reserva (fixa)</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Abatida do valor total · reembolsável até {REEMBOLSO_MESES} meses antes</span>
           </div>
           <span style={{ color: 'var(--navy)', fontSize: '2rem', fontFamily: 'var(--serif)', fontWeight: 500 }}>{formatCurrency(sinal)}</span>
         </div>
@@ -388,7 +400,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
         <div style={{ background: 'rgba(212,184,140,0.1)', border: '1px solid rgba(212,184,140,0.3)', padding: '20px', display: 'flex', gap: '14px', alignItems: 'flex-start', marginTop: '8px' }}>
           <Lock size={18} style={{ color: 'var(--gold-dark)', flexShrink: 0, marginTop: '2px' }} />
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.7 }}>
-            Ao confirmar, você receberá por e-mail o <strong style={{ color: 'var(--navy)' }}>contrato prévio de reserva</strong> com seu protocolo único e as instruções de pagamento do sinal (Mercado Pago ou PIX). Sua data fica pré-reservada por 48 horas.
+            Ao confirmar, você receberá por e-mail o <strong style={{ color: 'var(--navy)' }}>contrato prévio de reserva</strong> com seu protocolo único e a chave PIX para pagamento da taxa de {formatCurrency(sinal)}. Sua data fica pré-reservada por 48 horas. Reembolso integral em cancelamentos até {REEMBOLSO_MESES} meses antes do evento.
           </p>
         </div>
 
@@ -401,7 +413,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
           }}
           onMouseEnter={e => { if (!sending) e.currentTarget.style.background = 'var(--navy-soft)' }}
           onMouseLeave={e => { if (!sending) e.currentTarget.style.background = 'var(--navy)' }}>
-          {sending ? 'Processando...' : `Confirmar reserva · Sinal ${formatCurrency(sinal)}`}
+          {sending ? 'Processando...' : `Confirmar reserva · Taxa ${formatCurrency(sinal)}`}
         </button>
       </form>
     </div>
@@ -447,58 +459,44 @@ function SuccessScreen({ data, onReset }) {
         </p>
       </div>
 
-      {/* Valor do sinal em destaque */}
+      {/* Valor da taxa em destaque */}
       <div style={{ background: 'var(--navy)', color: '#fff', padding: 'clamp(28px, 4vw, 40px)', textAlign: 'center', marginBottom: '32px' }}>
         <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '12px' }}>
-          Sinal para bloquear sua data
+          Taxa de reserva · abatida do valor final
         </p>
         <p style={{ fontSize: 'clamp(2.5rem, 6vw, 3.5rem)', fontFamily: 'var(--serif)', fontWeight: 500, marginBottom: '8px' }}>
           {data.sinal}
         </p>
         <p style={{ fontSize: '13px', opacity: 0.7, letterSpacing: '1px' }}>
-          Pagamento em até 48 horas · Saldo {data.saldo} no dia do evento
+          Pagamento em até 48h · Saldo {data.saldo} no dia do evento
         </p>
       </div>
 
-      {/* Pagamento */}
+      {/* Pagamento — somente PIX */}
       <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', padding: 'clamp(24px, 4vw, 40px)', marginBottom: '24px' }}>
         <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '20px', fontWeight: 600 }}>
-          Como pagar
+          Pagamento via PIX
         </p>
 
-        {/* Mercado Pago */}
-        <a href={MERCADO_PAGO_LINK} target="_blank" rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
-            padding: '20px 24px', background: '#009ee3', color: '#fff',
-            textDecoration: 'none', marginBottom: '16px', transition: 'opacity 0.2s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-          <div>
-            <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.85, marginBottom: '4px' }}>
-              Opção 1 · Cartão, boleto, PIX
+        <div style={{ padding: 'clamp(20px, 3vw, 28px)', background: 'var(--cream)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px', flexWrap: 'wrap', gap: '8px' }}>
+            <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+              Chave PIX (CNPJ)
             </p>
-            <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>Pagar com Mercado Pago</p>
+            <p style={{ fontSize: '11px', color: 'var(--gold-dark)', fontWeight: 600 }}>
+              {data.sinal}
+            </p>
           </div>
-          <ExternalLink size={22} />
-        </a>
-
-        {/* PIX */}
-        <div style={{ padding: '20px 24px', background: 'var(--cream)', border: '1px solid rgba(0,0,0,0.06)' }}>
-          <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' }}>
-            Opção 2 · PIX direto
-          </p>
           <p style={{ fontSize: '0.95rem', color: 'var(--navy)', marginBottom: '14px' }}>
             Titular: <strong>{PIX_TITULAR}</strong>
           </p>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'stretch', flexWrap: 'wrap' }}>
-            <code style={{ flex: '1 1 240px', padding: '14px 16px', background: '#fff', border: '1px solid rgba(0,0,0,0.1)', fontFamily: 'monospace', fontSize: '14px', color: 'var(--navy)', wordBreak: 'break-all' }}>
-              {PIX_CHAVE}
+            <code style={{ flex: '1 1 240px', padding: '16px 18px', background: '#fff', border: '1px solid rgba(0,0,0,0.1)', fontFamily: 'monospace', fontSize: '15px', color: 'var(--navy)', wordBreak: 'break-all', letterSpacing: '0.5px' }}>
+              {PIX_CHAVE_FORMATADA}
             </code>
             <button onClick={copiarPix}
               style={{
-                padding: '14px 20px', background: copiado ? '#8fa586' : 'var(--navy)',
+                padding: '16px 22px', background: copiado ? '#8fa586' : 'var(--navy)',
                 color: '#fff', fontSize: '11px', letterSpacing: '2px',
                 textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', gap: '8px', border: 'none',
@@ -510,6 +508,14 @@ function SuccessScreen({ data, onReset }) {
 
         <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.7, marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
           Após o pagamento, envie o <strong style={{ color: 'var(--navy)' }}>comprovante pelo WhatsApp <a href="https://wa.me/5582988330033" style={{ color: 'var(--gold-dark)' }}>+55 82 98833-0033</a></strong> citando o protocolo acima. Em até 24h você recebe o contrato definitivo.
+        </p>
+      </div>
+
+      {/* Cláusula de reembolso */}
+      <div style={{ background: 'rgba(143,165,134,0.12)', border: '1px solid rgba(143,165,134,0.3)', padding: '20px 24px', marginBottom: '24px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+        <Check size={18} style={{ color: '#5f7d5a', flexShrink: 0, marginTop: '3px' }} />
+        <p style={{ fontSize: '13px', color: 'var(--navy)', lineHeight: 1.7 }}>
+          <strong>Reembolso integral garantido.</strong> Em caso de cancelamento solicitado até <strong>{REEMBOLSO_MESES} meses antes</strong> da data do evento, a taxa de reserva é devolvida 100%.
         </p>
       </div>
 
