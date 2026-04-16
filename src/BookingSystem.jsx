@@ -2,16 +2,20 @@ import { useState, useMemo } from 'react'
 import { Calendar, Check, X as XIcon, ChevronLeft, ChevronRight, Users, MapPin, Clock, ArrowLeft, ArrowRight as ArrowRightIcon, Lock, Copy } from 'lucide-react'
 
 // ============ CONFIGURAÇÃO DE PAGAMENTO ============
-// Taxa fixa de reserva em R$ (abatida do valor total do evento)
-const TAXA_RESERVA = 1000
+// Taxa fixa de PRÉ-RESERVA em R$ (descontada do sinal ao firmar contrato)
+const TAXA_PRE_RESERVA = 1000
+// Percentual do sinal formal cobrado ao firmar o contrato definitivo
+const SINAL_PERCENTUAL = 0.20
 // Chave PIX (CNPJ)
 const PIX_CHAVE = '52846555000152'
 const PIX_CHAVE_FORMATADA = '52.846.555/0001-52'
 const PIX_TITULAR = 'Praia Cervejeira Ipioca'
 // Prazo (meses antes do evento) para reembolso integral em caso de cancelamento
 const REEMBOLSO_MESES = 6
-// E-mail para onde a reserva é enviada
+// E-mail principal para onde a reserva é enviada
 const EMAIL_RECEBEDOR = 'zepedrascarneiro@gmail.com'
+// Cópias internas enviadas em paralelo (além do cliente)
+const COPIAS_INTERNAS = ['raissarprt@gmail.com']
 // ====================================================
 
 // Datas já reservadas (ficará vermelho)
@@ -240,7 +244,10 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
   const pkg = PACOTES_PRECO[selectedPackage]
   const tier = getTier(selectedDate)
   const totalPrice = pkg.base * TIERS[tier].mult
-  const sinal = TAXA_RESERVA // taxa fixa, abatida do valor final
+  const preReserva = TAXA_PRE_RESERVA // valor pago agora para bloquear a data
+  const sinalFormal = totalPrice * SINAL_PERCENTUAL // 20% do total (cobrado ao firmar contrato)
+  const sinalRestante = Math.max(0, sinalFormal - preReserva) // sinal menos o que já foi pago
+  const saldoEvento = totalPrice - sinalFormal // pago no dia do evento
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -257,7 +264,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
     // Contrato Prévio de Reserva (enviado por e-mail)
     const contratoPrevio = [
       '═══════════════════════════════════════',
-      '   CONTRATO PRÉVIO DE RESERVA',
+      '   CONTRATO PRÉVIO DE PRÉ-RESERVA',
       '   CASA MAR IPIOCA — EVENTOS',
       '═══════════════════════════════════════',
       '',
@@ -276,32 +283,39 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
       `Temporada: ${TIERS[tier].label}`,
       `Local: Casa Mar Ipioca — Praia de Ipioca, Maceió/AL`,
       '',
-      '━━━ VALORES ━━━',
-      `Valor estimado do evento: ${formatCurrency(totalPrice)}`,
-      `TAXA DE RESERVA (fixa): ${formatCurrency(sinal)}`,
-      `→ Esta taxa é ABATIDA do valor total do evento.`,
-      `Saldo no dia do evento: ${formatCurrency(totalPrice - sinal)}`,
+      '━━━ VALORES E CRONOGRAMA DE PAGAMENTO ━━━',
+      `Valor estimado total do evento: ${formatCurrency(totalPrice)}`,
       '',
-      '━━━ PAGAMENTO (somente PIX) ━━━',
+      `  1) AGORA — TAXA DE PRÉ-RESERVA: ${formatCurrency(preReserva)}`,
+      '     Paga via PIX para bloquear sua data por 48 horas.',
+      '     Este valor será DESCONTADO do sinal formal.',
+      '',
+      `  2) AO FIRMAR CONTRATO — SINAL (20%): ${formatCurrency(sinalFormal)}`,
+      `     Deste valor, a pré-reserva (${formatCurrency(preReserva)}) já foi paga.`,
+      `     Restante a pagar nesta etapa: ${formatCurrency(sinalRestante)}`,
+      '',
+      `  3) NO DIA DO EVENTO — SALDO: ${formatCurrency(saldoEvento)}`,
+      '     Equivalente a 80% do valor total do evento.',
+      '',
+      '━━━ PAGAMENTO DA PRÉ-RESERVA (somente PIX) ━━━',
       `Chave PIX (CNPJ): ${PIX_CHAVE_FORMATADA}`,
       `Titular: ${PIX_TITULAR}`,
+      `Valor: ${formatCurrency(preReserva)}`,
       '',
-      '━━━ CONDIÇÕES DE RESERVA ━━━',
-      '1. Esta reserva é PROVISÓRIA e fica válida por 48 horas.',
+      '━━━ CONDIÇÕES ━━━',
+      '1. Esta PRÉ-RESERVA é provisória e fica válida por 48 horas.',
       `   Expira em: ${validadeReserva.toLocaleString('pt-BR')}`,
-      '2. A data só será bloqueada EXCLUSIVAMENTE após a confirmação',
-      '   do pagamento da taxa de reserva (PIX).',
-      `3. REEMBOLSO: em caso de cancelamento solicitado até`,
-      `   ${limiteReembolso.toLocaleDateString('pt-BR')} (${REEMBOLSO_MESES} meses antes do evento),`,
-      '   a taxa de reserva será reembolsada INTEGRALMENTE.',
-      '   Cancelamentos após essa data não são reembolsáveis.',
-      '4. Após a confirmação do pagamento será emitido o contrato',
-      '   definitivo com todos os detalhes, itens inclusos e cronograma.',
+      '2. A data só é bloqueada EXCLUSIVAMENTE após confirmação do PIX.',
+      `3. REEMBOLSO: cancelamentos solicitados até`,
+      `   ${limiteReembolso.toLocaleDateString('pt-BR')} (${REEMBOLSO_MESES} meses antes do evento)`,
+      '   são reembolsados INTEGRALMENTE. Após essa data, não reembolsável.',
+      '4. Após o pagamento será emitido o contrato definitivo com todos',
+      '   os detalhes, itens inclusos, cláusulas e cronograma.',
       '5. Observações do(a) contratante:',
       `   ${form.mensagem || '(nenhuma)'}`,
       '',
       '━━━ PRÓXIMOS PASSOS ━━━',
-      '→ Efetue o PIX da taxa de reserva nas próximas 48 horas.',
+      `→ Efetue o PIX de ${formatCurrency(preReserva)} nas próximas 48 horas.`,
       '→ Envie o comprovante para o WhatsApp: +55 82 98833-0033',
       '→ Aguarde o contrato definitivo (até 24h após o comprovante).',
       '',
@@ -318,15 +332,18 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
       pacote: pkg.nome,
       data_evento: formatDateBR(selectedDate),
       temporada: TIERS[tier].label,
-      preco_total: formatCurrency(totalPrice),
-      sinal: formatCurrency(sinal),
-      saldo: formatCurrency(totalPrice - sinal),
+      valor_total: formatCurrency(totalPrice),
+      pre_reserva: formatCurrency(preReserva),
+      sinal_formal: formatCurrency(sinalFormal),
+      sinal_restante: formatCurrency(sinalRestante),
+      saldo_evento: formatCurrency(saldoEvento),
       protocolo,
       contrato_previo: contratoPrevio,
-      _subject: `Nova Reserva Casa Mar — ${pkg.nome} — ${formatDateBR(selectedDate)} [${protocolo}]`,
+      _subject: `Nova Pré-Reserva Casa Mar — ${pkg.nome} — ${formatDateBR(selectedDate)} [${protocolo}]`,
       _template: 'box',
       _captcha: 'false',
-      _cc: form.email, // envia cópia ao cliente também
+      // Cópias simultâneas: cliente + equipe interna (Raíssa)
+      _cc: [form.email, ...COPIAS_INTERNAS].join(','),
     }
 
     try {
@@ -335,7 +352,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(data),
       })
-      onConfirm({ ...data, sinal_valor: sinal, data_evento_obj: selectedDate })
+      onConfirm({ ...data, pre_reserva_valor: preReserva, data_evento_obj: selectedDate })
     } catch (err) {
       alert('Erro ao enviar. Tente pelo WhatsApp: +55 82 98833-0033')
       setSending(false)
@@ -371,12 +388,35 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
           <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Valor estimado do evento</span>
           <span style={{ color: 'var(--navy)', fontSize: '1.3rem', fontFamily: 'var(--serif)' }}>{formatCurrency(totalPrice)}</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', background: 'rgba(212,184,140,0.15)', margin: '16px -20px 0', padding: '24px 20px' }}>
-          <div>
-            <span style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold-dark)', display: 'block', marginBottom: '4px' }}>Taxa de reserva (fixa)</span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Abatida do valor total · reembolsável até {REEMBOLSO_MESES} meses antes</span>
+
+        {/* Mini-cronograma de pagamentos */}
+        <div style={{ margin: '16px -20px 0', padding: '24px 20px', background: 'rgba(212,184,140,0.15)' }}>
+          <p style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '16px', fontWeight: 600 }}>
+            Cronograma de pagamento
+          </p>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 0' }}>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: '11px', color: 'var(--gold-dark)', fontWeight: 600, display: 'block' }}>AGORA · Pré-reserva</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Via PIX · bloqueia a data</span>
+            </div>
+            <span style={{ fontSize: '1.5rem', fontFamily: 'var(--serif)', color: 'var(--navy)', fontWeight: 500 }}>{formatCurrency(preReserva)}</span>
           </div>
-          <span style={{ color: 'var(--navy)', fontSize: '2rem', fontFamily: 'var(--serif)', fontWeight: 500 }}>{formatCurrency(sinal)}</span>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 0', opacity: 0.85 }}>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, display: 'block' }}>AO FIRMAR CONTRATO · Sinal (20%)</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Descontada a pré-reserva, restam {formatCurrency(sinalRestante)}</span>
+            </div>
+            <span style={{ fontSize: '1.1rem', fontFamily: 'var(--serif)', color: 'var(--text-muted)' }}>{formatCurrency(sinalFormal)}</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 0', opacity: 0.85 }}>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, display: 'block' }}>NO DIA DO EVENTO · Saldo (80%)</span>
+            </div>
+            <span style={{ fontSize: '1.1rem', fontFamily: 'var(--serif)', color: 'var(--text-muted)' }}>{formatCurrency(saldoEvento)}</span>
+          </div>
         </div>
       </div>
 
@@ -400,7 +440,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
         <div style={{ background: 'rgba(212,184,140,0.1)', border: '1px solid rgba(212,184,140,0.3)', padding: '20px', display: 'flex', gap: '14px', alignItems: 'flex-start', marginTop: '8px' }}>
           <Lock size={18} style={{ color: 'var(--gold-dark)', flexShrink: 0, marginTop: '2px' }} />
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.7 }}>
-            Ao confirmar, você receberá por e-mail o <strong style={{ color: 'var(--navy)' }}>contrato prévio de reserva</strong> com seu protocolo único e a chave PIX para pagamento da taxa de {formatCurrency(sinal)}. Sua data fica pré-reservada por 48 horas. Reembolso integral em cancelamentos até {REEMBOLSO_MESES} meses antes do evento.
+            Ao confirmar, você receberá por e-mail o <strong style={{ color: 'var(--navy)' }}>contrato prévio de pré-reserva</strong> com seu protocolo único e a chave PIX para pagamento de <strong style={{ color: 'var(--navy)' }}>{formatCurrency(preReserva)}</strong>. Sua data fica pré-reservada por 48 horas. O valor é descontado do sinal de 20% quando o contrato definitivo for firmado. Reembolso integral em cancelamentos até {REEMBOLSO_MESES} meses antes do evento.
           </p>
         </div>
 
@@ -413,7 +453,7 @@ function Step3_Confirm({ selectedPackage, selectedDate, onConfirm, onSubmit }) {
           }}
           onMouseEnter={e => { if (!sending) e.currentTarget.style.background = 'var(--navy-soft)' }}
           onMouseLeave={e => { if (!sending) e.currentTarget.style.background = 'var(--navy)' }}>
-          {sending ? 'Processando...' : `Confirmar reserva · Taxa ${formatCurrency(sinal)}`}
+          {sending ? 'Processando...' : `Confirmar pré-reserva · ${formatCurrency(preReserva)}`}
         </button>
       </form>
     </div>
@@ -459,23 +499,23 @@ function SuccessScreen({ data, onReset }) {
         </p>
       </div>
 
-      {/* Valor da taxa em destaque */}
+      {/* Pré-reserva em destaque */}
       <div style={{ background: 'var(--navy)', color: '#fff', padding: 'clamp(28px, 4vw, 40px)', textAlign: 'center', marginBottom: '32px' }}>
         <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '12px' }}>
-          Taxa de reserva · abatida do valor final
+          Pré-reserva · descontada do sinal ao firmar contrato
         </p>
         <p style={{ fontSize: 'clamp(2.5rem, 6vw, 3.5rem)', fontFamily: 'var(--serif)', fontWeight: 500, marginBottom: '8px' }}>
-          {data.sinal}
+          {data.pre_reserva}
         </p>
         <p style={{ fontSize: '13px', opacity: 0.7, letterSpacing: '1px' }}>
-          Pagamento em até 48h · Saldo {data.saldo} no dia do evento
+          Pagamento em até 48h para bloquear a data
         </p>
       </div>
 
       {/* Pagamento — somente PIX */}
       <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', padding: 'clamp(24px, 4vw, 40px)', marginBottom: '24px' }}>
         <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '20px', fontWeight: 600 }}>
-          Pagamento via PIX
+          Pagamento da pré-reserva via PIX
         </p>
 
         <div style={{ padding: 'clamp(20px, 3vw, 28px)', background: 'var(--cream)', border: '1px solid rgba(0,0,0,0.06)' }}>
@@ -484,7 +524,7 @@ function SuccessScreen({ data, onReset }) {
               Chave PIX (CNPJ)
             </p>
             <p style={{ fontSize: '11px', color: 'var(--gold-dark)', fontWeight: 600 }}>
-              {data.sinal}
+              {data.pre_reserva}
             </p>
           </div>
           <p style={{ fontSize: '0.95rem', color: 'var(--navy)', marginBottom: '14px' }}>
@@ -511,11 +551,29 @@ function SuccessScreen({ data, onReset }) {
         </p>
       </div>
 
+      {/* Próximas etapas de pagamento */}
+      <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', padding: '24px', marginBottom: '24px' }}>
+        <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '16px', fontWeight: 600 }}>
+          Próximas etapas
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          <div>
+            <p style={{ fontSize: '13px', color: 'var(--navy)', fontWeight: 600 }}>Ao firmar contrato · Sinal (20%)</p>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Menos a pré-reserva já paga → restante de {data.sinal_restante}</p>
+          </div>
+          <span style={{ fontSize: '1.05rem', fontFamily: 'var(--serif)', color: 'var(--navy)' }}>{data.sinal_formal}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '12px 0' }}>
+          <p style={{ fontSize: '13px', color: 'var(--navy)', fontWeight: 600 }}>No dia do evento · Saldo (80%)</p>
+          <span style={{ fontSize: '1.05rem', fontFamily: 'var(--serif)', color: 'var(--navy)' }}>{data.saldo_evento}</span>
+        </div>
+      </div>
+
       {/* Cláusula de reembolso */}
       <div style={{ background: 'rgba(143,165,134,0.12)', border: '1px solid rgba(143,165,134,0.3)', padding: '20px 24px', marginBottom: '24px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
         <Check size={18} style={{ color: '#5f7d5a', flexShrink: 0, marginTop: '3px' }} />
         <p style={{ fontSize: '13px', color: 'var(--navy)', lineHeight: 1.7 }}>
-          <strong>Reembolso integral garantido.</strong> Em caso de cancelamento solicitado até <strong>{REEMBOLSO_MESES} meses antes</strong> da data do evento, a taxa de reserva é devolvida 100%.
+          <strong>Reembolso integral garantido.</strong> Em caso de cancelamento solicitado até <strong>{REEMBOLSO_MESES} meses antes</strong> da data do evento, a pré-reserva é devolvida 100%.
         </p>
       </div>
 
