@@ -39,13 +39,13 @@ const pacotes = [
 ]
 
 const IMG = {
-  hero: '/images/hero-1.jpg',
-  villa: '/images/hero-2.jpg',
-  capela: '/images/hero-3.jpg',
-  salao: '/images/hero-4.jpg',
-  pool: '/images/hero-5.jpg',
-  noite: '/images/hero-6.jpg',
-  sign: '/images/casa-sign.jpg',
+  hero: './images/hero-1.jpg',
+  villa: './images/hero-2.jpg',
+  capela: './images/hero-3.jpg',
+  salao: './images/hero-4.jpg',
+  pool: './images/hero-5.jpg',
+  noite: './images/hero-6.jpg',
+  sign: './images/casa-sign.jpg',
 }
 
 function Nav({ active }) {
