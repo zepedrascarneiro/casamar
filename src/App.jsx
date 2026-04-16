@@ -6,7 +6,7 @@ const WHATSAPP = 'https://api.whatsapp.com/send?phone=5582988330033&text=Ol%C3%A
 const WHATSAPP_NUMBER = '+55 82 98833-0033'
 
 const sections = [
-  { id: 'villa', label: 'Villa' },
+  { id: 'villa', label: 'A Casa' },
   { id: 'capela', label: 'Capela' },
   { id: 'salao', label: 'Salão' },
   { id: 'pacotes', label: 'Pacotes' },
@@ -21,7 +21,7 @@ const pacotes = [
     tagline: 'Intimista',
     convidados: 'Até 4 convidados',
     desc: 'A celebração dos dois, com o mar como testemunha. Uma cerimônia íntima, elegante e inesquecível.',
-    inclui: ['Cerimônia na Capela ou beira-mar', 'Decoração minimalista exclusiva', 'Hospedagem do casal na Villa', 'Registro fotográfico essencial'],
+    inclui: ['Cerimônia na Capela ou beira-mar', 'Decoração minimalista exclusiva', 'Hospedagem do casal na Casa Mar', 'Registro fotográfico essencial'],
   },
   {
     nome: 'Essencial',
@@ -152,7 +152,7 @@ function Hero() {
             à beira-mar
           </h1>
           <p style={{ fontSize: 'clamp(1rem, 1.4vw, 1.15rem)', maxWidth: '560px', margin: '0 auto 48px', opacity: 0.9, fontWeight: 300, lineHeight: 1.8 }}>
-            Uma villa histórica, uma capela à beira-mar e um salão de eventos.
+            Uma casa dos anos 60 à beira-mar, uma capela no único jardim de lúpulo beira-mar do planeta e um salão modulável.
             Três cenários únicos no mesmo paraíso, prontos para receber o dia mais importante da sua vida.
           </p>
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -196,8 +196,8 @@ function Intro() {
           para celebrar o que há de mais importante: os momentos que marcam uma vida.
         </p>
         <p style={{ fontSize: '1.15rem', color: 'var(--text-muted)', lineHeight: 1.9, fontWeight: 300 }}>
-          A Casa Mar reúne em um só endereço uma villa de charme colonial, uma capela íntima
-          e um salão de eventos integrado à natureza — três cenários únicos, a poucos passos do mar.
+          A Casa Mar reúne em um só endereço uma casa dos anos 60 preservada, uma capela íntima
+          no único jardim de lúpulo beira-mar do planeta e um salão modulável — três cenários únicos, a poucos passos do mar.
         </p>
       </div>
     </section>
@@ -417,7 +417,7 @@ function Footer() {
           <div>
             <p style={{ fontFamily: 'var(--serif)', fontSize: '1.8rem', fontStyle: 'italic', color: 'var(--gold)', marginBottom: '16px' }}>Casa Mar</p>
             <p style={{ fontSize: '14px', opacity: 0.7, lineHeight: 1.8 }}>
-              Villa, Capela e Salão de Eventos<br />
+              Casa, Capela e Salão de Eventos<br />
               Praia de Ipioca, Maceió — AL
             </p>
           </div>
@@ -485,10 +485,10 @@ export default function App() {
       <Espaco
         id="villa"
         num="01"
-        subtitulo="A Villa"
-        titulo="Uma casa que respira história"
-        desc="A villa principal, com arquitetura colonial preservada e vista privilegiada para o mar, acomoda os noivos e padrinhos em suítes de charme. Jardins tropicais, piscina de borda infinita e varandas integram a natureza ao conforto."
-        destaques={['Suítes privativas com vista para o mar', 'Piscina de borda infinita e área gourmet', 'Jardins tropicais exclusivos', 'Arquitetura colonial restaurada']}
+        subtitulo="A Casa"
+        titulo="Casa à beira-mar dos anos 60"
+        desc="Uma casa dos anos 60 com arquitetura preservada e vista deslumbrante do mar de Ipioca. O projeto para 2027 contempla novas suítes, a casa da noiva e um spa — ampliando ainda mais a experiência de hospedagem dos noivos e padrinhos."
+        destaques={['Casa original dos anos 60 preservada', 'Vista deslumbrante do mar de Ipioca', 'Projeto 2027: novas suítes', 'Projeto 2027: casa da noiva e spa exclusivo']}
         img={IMG.villa}
       />
 
@@ -497,8 +497,8 @@ export default function App() {
         num="02"
         subtitulo="A Capela"
         titulo="O altar perfeito para o sim"
-        desc="A Capela de Ipioca é o cenário ideal para cerimônias religiosas ou ecumênicas. Com estilo rústico-elegante e janelas voltadas para o mar, oferece a intimidade e a espiritualidade que um momento tão sagrado pede."
-        destaques={['Capacidade para até 80 convidados', 'Janelas com vista direta para o mar', 'Arquitetura rústico-elegante', 'Atmosfera íntima e espiritual']}
+        desc="A Capela de Ipioca é o cenário ideal para cerimônias religiosas ou ecumênicas. Localizada no único jardim de lúpulo à beira-mar do planeta, oferece a intimidade, a espiritualidade e a atmosfera única que um momento tão sagrado pede."
+        destaques={['Capacidade para até 200 convidados', 'No único jardim de lúpulo à beira-mar do planeta', 'Arquitetura rústico-elegante', 'Atmosfera íntima e espiritual']}
         img={IMG.capela}
         reverse
       />
@@ -508,8 +508,8 @@ export default function App() {
         num="03"
         subtitulo="O Salão de Eventos"
         titulo="Onde a festa ganha vida"
-        desc="Um salão integrado à paisagem, com pé-direito alto e portas de vidro que se abrem para o jardim. Flexível para recepções intimistas ou grandes celebrações, com infraestrutura completa de som, iluminação e climatização."
-        destaques={['Capacidade até 300 convidados', 'Pé-direito alto e ambiente integrado', 'Infraestrutura completa para eventos', 'Cozinha industrial para buffets']}
+        desc="Um salão modulável integrado entre a Capela e a Casa Mar, flexível para recepções intimistas ou grandes celebrações, com infraestrutura completa de som, iluminação e climatização."
+        destaques={['Capacidade até 700 convidados', 'Espaço modulável integrado entre a Capela e a Casa Mar', 'Banheiros exclusivos para staff', 'Cozinha completa para buffets parceiros']}
         img={IMG.salao}
       />
 
