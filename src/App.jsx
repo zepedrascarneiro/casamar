@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Menu, X, MessageCircle, MapPin, Instagram, ChevronDown, Calendar } from 'lucide-react'
+import { Menu, X, MessageCircle, MapPin, Instagram, ChevronDown, Calendar, Church, Home, Camera, Users, Heart, BedDouble, Clock } from 'lucide-react'
 import BookingSystem from './BookingSystem.jsx'
 
 const WHATSAPP = 'https://api.whatsapp.com/send?phone=5582988330033&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20a%20Casa%20Mar%20Ipioca.'
 const WHATSAPP_NUMBER = '+55 82 98833-0033'
+const IPIOCA_BEACH_LINK = 'https://api.whatsapp.com/send?phone=5582988330033&text=Ol%C3%A1%2C%20j%C3%A1%20reservei%20meu%20destination%20wedding%20e%20gostaria%20de%20saber%20sobre%20hospedagem%20no%20Ipioca%20Beach.'
 
 const sections = [
   { id: 'villa', label: 'A Casa' },
@@ -15,31 +16,6 @@ const sections = [
   { id: 'contato', label: 'Contato' },
 ]
 
-const pacotes = [
-  {
-    nome: 'Destination',
-    tagline: 'Intimista',
-    convidados: 'Até 4 convidados',
-    desc: 'A celebração dos dois, com o mar como testemunha. Uma cerimônia íntima, elegante e inesquecível.',
-    inclui: ['Cerimônia na Capela ou beira-mar', 'Decoração minimalista exclusiva', 'Hospedagem do casal na Casa Mar', 'Registro fotográfico essencial'],
-  },
-  {
-    nome: 'Essencial',
-    tagline: 'Completo',
-    convidados: 'Até 50 convidados',
-    desc: 'A experiência completa para casamentos exclusivos. Sofisticação em cada detalhe, do altar à pista.',
-    inclui: ['Cerimônia + recepção na propriedade', 'Mobiliário de design', 'Buffet completo incluso', 'Equipe de som, iluminação e assessoria'],
-    destaque: true,
-  },
-  {
-    nome: 'Premium',
-    tagline: 'Grandioso',
-    convidados: 'Até 300 convidados',
-    desc: 'O ápice do luxo costeiro. Para casais que buscam uma celebração única, personalizada e sem limites.',
-    inclui: ['Assessoria personalizada dedicada', 'Decoração personalizada de autor', 'Hospedagem para família e padrinhos', 'Cerimônia, recepção e after à beira-mar'],
-  },
-]
-
 const IMG = {
   hero: './images/hero-1.jpg',
   villa: './images/hero-2.jpg',
@@ -49,6 +25,86 @@ const IMG = {
   noite: './images/hero-6.jpg',
   sign: './images/casa-sign.jpg',
 }
+
+// ============ PRODUTOS ============
+const PRODUTOS = [
+  {
+    id: 'capela',
+    icon: Church,
+    nome: 'Destination Wedding',
+    local: 'Capela de Ipioca',
+    preco: 1600,
+    precoLabel: 'R$ 1.600',
+    precoDetalhe: 'aluguel do espaço',
+    info: 'Cerimônia para até 20 pessoas na Capela histórica de Ipioca.',
+    horario: '08:00 às 17:00',
+    addons: [
+      'Celebrante + decoração + sessão de fotos',
+      'Celebrante + decoração + sessão de fotos + almoço',
+      'Celebrante + almoço',
+    ],
+    addonNote: 'Pacotes à parte — monte o seu!',
+    flow: 'booking',
+  },
+  {
+    id: 'casamar',
+    icon: Home,
+    nome: 'Destination Wedding',
+    local: 'CasAMar',
+    preco: 2250,
+    precoLabel: 'R$ 2.250',
+    precoDetalhe: 'aluguel do espaço',
+    info: 'Cerimônia para até 20 pessoas na Casa Mar à beira-mar.',
+    horario: '08:00 às 17:00',
+    addons: [
+      'Celebrante + decoração + sessão de fotos',
+      'Celebrante + decoração + sessão de fotos + almoço',
+      'Celebrante + almoço',
+    ],
+    addonNote: 'Pacotes à parte — monte o seu!',
+    flow: 'booking',
+  },
+  {
+    id: 'prewedding',
+    icon: Camera,
+    nome: 'Pré Wedding',
+    local: 'Sessão de Fotos',
+    precoLabel: 'A partir de R$ 600',
+    info: '3 ambientes incríveis: Capela + Salão + CasAMar\n10 fotos profissionais · 2h de duração',
+    flow: 'prewedding',
+  },
+  {
+    id: 'casamento50',
+    icon: Heart,
+    nome: 'Casamentos',
+    local: 'Até 50 pessoas',
+    precoLabel: 'A partir de R$ 40.000',
+    precoDetalhe: 'pacote completo',
+    inclui: ['Espaço', 'Decoração', 'Make', 'Celebrante', 'Fotógrafo', 'Doces finos', 'Músico', 'Cerimonial', 'Buffet'],
+    aluguel: 'Só o espaço: a partir de R$ 5.500',
+    flow: 'whatsapp',
+  },
+  {
+    id: 'casamento50plus',
+    icon: Users,
+    nome: 'Casamentos',
+    local: 'Acima de 50 pessoas',
+    precoLabel: 'A partir de R$ 45.000',
+    precoDetalhe: 'pacote completo',
+    inclui: ['Espaço', 'Decoração', 'Make', 'Celebrante', 'Fotógrafo', 'Doces finos', 'Músico', 'Cerimonial', 'Buffet'],
+    aluguel: 'Só o espaço: a partir de R$ 12.000',
+    flow: 'whatsapp',
+  },
+  {
+    id: 'hospedagem',
+    icon: BedDouble,
+    nome: 'Já Reservei!',
+    local: 'Quero Hospedagem',
+    precoLabel: 'Conheça o Ipioca Beach',
+    info: 'Já reservou seu destination wedding? Veja as opções de hospedagem para seus convidados.',
+    flow: 'external',
+  },
+]
 
 function Nav({ active }) {
   const [open, setOpen] = useState(false)
@@ -156,11 +212,11 @@ function Hero() {
             Três cenários únicos no mesmo paraíso, prontos para receber o dia mais importante da sua vida.
           </p>
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => document.querySelector('#reservar')?.scrollIntoView({ behavior: 'smooth' })}
+            <button onClick={() => document.querySelector('#pacotes')?.scrollIntoView({ behavior: 'smooth' })}
               style={{ padding: '18px 44px', background: 'var(--gold)', color: 'var(--navy)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.3s' }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--gold-dark)'}
               onMouseLeave={e => e.currentTarget.style.background = 'var(--gold)'}>
-              Reservar Minha Data
+              Ver Pacotes
             </button>
             <button onClick={() => document.querySelector('#villa')?.scrollIntoView({ behavior: 'smooth' })}
               style={{ padding: '18px 44px', background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 500, transition: 'all 0.3s' }}
@@ -245,64 +301,195 @@ function Espaco({ id, num, titulo, subtitulo, desc, destaques, img, reverse }) {
   )
 }
 
-function Pacotes() {
+function ProdutoCard({ produto, onSelect, destaque }) {
+  const Icon = produto.icon
+  const isWhatsapp = produto.flow === 'whatsapp'
+  const isExternal = produto.flow === 'external'
+
+  const handleClick = () => {
+    if (isExternal) {
+      window.open(IPIOCA_BEACH_LINK, '_blank')
+      return
+    }
+    if (isWhatsapp) {
+      const msg = encodeURIComponent(`Olá, gostaria de saber mais sobre ${produto.nome} — ${produto.local}. Podem me enviar um orçamento?`)
+      window.open(`https://api.whatsapp.com/send?phone=5582988330033&text=${msg}`, '_blank')
+      return
+    }
+    onSelect(produto)
+  }
+
+  const ctaLabel = isExternal ? 'Ver Hospedagem' : isWhatsapp ? 'Falar com Consultor' : 'Escolher Minha Data'
+
+  return (
+    <div style={{
+      background: destaque ? 'rgba(212,184,140,0.08)' : 'rgba(255,255,255,0.03)',
+      border: destaque ? '1px solid rgba(212,184,140,0.4)' : '1px solid rgba(255,255,255,0.08)',
+      padding: 'clamp(28px, 3vw, 40px)',
+      position: 'relative',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      {destaque && (
+        <div style={{ position: 'absolute', top: '-1px', left: '50%', transform: 'translateX(-50%) translateY(-50%)', background: 'var(--gold)', color: 'var(--navy)', padding: '6px 20px', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 600 }}>
+          Mais popular
+        </div>
+      )}
+
+      <Icon size={28} style={{ color: 'var(--gold)', marginBottom: '20px' }} />
+
+      <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '8px', fontWeight: 500 }}>
+        {produto.nome}
+      </p>
+      <h3 style={{ fontSize: '1.8rem', marginBottom: '16px', fontWeight: 300, fontStyle: 'italic', lineHeight: 1.2 }}>
+        {produto.local}
+      </h3>
+
+      <div style={{ width: '40px', height: '1px', background: 'rgba(212,184,140,0.5)', marginBottom: '20px' }} />
+
+      {/* Preço */}
+      <p style={{ fontSize: '1.3rem', fontFamily: 'var(--serif)', color: 'var(--gold)', marginBottom: produto.precoDetalhe ? '4px' : '16px', fontWeight: 500 }}>
+        {produto.precoLabel}
+      </p>
+      {produto.precoDetalhe && (
+        <p style={{ fontSize: '0.75rem', letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.5, marginBottom: '16px' }}>
+          {produto.precoDetalhe}
+        </p>
+      )}
+
+      {/* Info */}
+      <p style={{ fontSize: '0.9rem', opacity: 0.85, lineHeight: 1.8, marginBottom: '16px', fontWeight: 300, whiteSpace: 'pre-line' }}>
+        {produto.info}
+      </p>
+
+      {/* Horário */}
+      {produto.horario && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', fontSize: '0.85rem', opacity: 0.7 }}>
+          <Clock size={14} style={{ color: 'var(--gold)' }} />
+          <span>Horários: {produto.horario}</span>
+        </div>
+      )}
+
+      {/* Itens inclusos (casamentos grandes) */}
+      {produto.inclui && (
+        <div style={{ marginBottom: '16px' }}>
+          <p style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Pacote completo inclui:</p>
+          <p style={{ fontSize: '0.85rem', opacity: 0.8, lineHeight: 1.7 }}>
+            {produto.inclui.join(', ')}
+          </p>
+        </div>
+      )}
+
+      {/* Aluguel separado */}
+      {produto.aluguel && (
+        <p style={{ fontSize: '0.9rem', color: 'var(--gold)', marginBottom: '16px', fontWeight: 500 }}>
+          {produto.aluguel}
+        </p>
+      )}
+
+      {/* Add-ons */}
+      {produto.addons && (
+        <div style={{ marginBottom: '16px' }}>
+          <p style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Opções à parte:</p>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {produto.addons.map((addon, j) => (
+              <li key={j} style={{ display: 'flex', gap: '8px', padding: '5px 0', fontSize: '0.85rem', opacity: 0.8 }}>
+                <span style={{ color: 'var(--gold)' }}>◆</span>
+                {addon}
+              </li>
+            ))}
+          </ul>
+          {produto.addonNote && (
+            <p style={{ fontSize: '0.8rem', color: 'var(--gold)', marginTop: '8px', fontStyle: 'italic' }}>
+              {produto.addonNote}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Spacer */}
+      <div style={{ flex: 1 }} />
+
+      {/* CTA */}
+      <button onClick={handleClick}
+        style={{
+          display: 'block', width: '100%', textAlign: 'center', padding: '16px',
+          background: destaque ? 'var(--gold)' : 'transparent',
+          color: destaque ? 'var(--navy)' : '#fff',
+          border: destaque ? 'none' : '1px solid rgba(255,255,255,0.3)',
+          fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600,
+          cursor: 'pointer', transition: 'all 0.3s', marginTop: '12px',
+        }}
+        onMouseEnter={e => {
+          if (destaque) { e.currentTarget.style.background = 'var(--gold-dark)' }
+          else { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--navy)' }
+        }}
+        onMouseLeave={e => {
+          if (destaque) { e.currentTarget.style.background = 'var(--gold)' }
+          else { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#fff' }
+        }}>
+        {ctaLabel}
+      </button>
+    </div>
+  )
+}
+
+function Pacotes({ onSelectProduct }) {
   return (
     <section id="pacotes" style={{ padding: 'clamp(80px, 12vw, 160px) 24px', background: 'var(--navy)', color: '#fff', position: 'relative' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+      <div style={{ maxWidth: '1300px', margin: '0 auto', textAlign: 'center' }}>
         <p style={{ fontSize: '11px', letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '28px', fontWeight: 600 }}>
-          Experiências Exclusivas
+          Escolha seu estilo, simplifique
         </p>
         <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', marginBottom: '28px', fontWeight: 300, lineHeight: 1.1 }}>
           Pacotes <span style={{ fontStyle: 'italic', color: 'var(--gold)' }}>sob medida</span>
         </h2>
         <div style={{ width: '60px', height: '1px', background: 'var(--gold)', margin: '0 auto 36px' }} />
-        <p style={{ maxWidth: '600px', margin: '0 auto 80px', fontSize: '1.05rem', opacity: 0.8, lineHeight: 1.8, fontWeight: 300 }}>
-          De celebrações intimistas a grandes cerimônias, cada pacote é pensado para oferecer
-          o máximo em sofisticação, privacidade e beleza natural.
+        <p style={{ maxWidth: '650px', margin: '0 auto 80px', fontSize: '1.05rem', opacity: 0.8, lineHeight: 1.8, fontWeight: 300 }}>
+          Você encontra tudo em um lugar só. De cerimônias intimistas a grandes celebrações,
+          cada pacote foi pensado para tornar o seu dia inesquecível.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '32px', textAlign: 'left' }}>
-          {pacotes.map((p, i) => (
-            <div key={i} style={{
-              background: p.destaque ? 'rgba(212,184,140,0.08)' : 'rgba(255,255,255,0.03)',
-              border: p.destaque ? '1px solid rgba(212,184,140,0.4)' : '1px solid rgba(255,255,255,0.08)',
-              padding: 'clamp(32px, 4vw, 48px)',
-              position: 'relative',
-            }}>
-              {p.destaque && (
-                <div style={{ position: 'absolute', top: '-1px', left: '50%', transform: 'translateX(-50%) translateY(-50%)', background: 'var(--gold)', color: 'var(--navy)', padding: '6px 20px', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Mais escolhido
-                </div>
-              )}
-              <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '12px', fontWeight: 500 }}>
-                {p.tagline}
-              </p>
-              <h3 style={{ fontSize: '2.2rem', marginBottom: '8px', fontWeight: 300, fontStyle: 'italic' }}>
-                {p.nome}
-              </h3>
-              <p style={{ fontSize: '14px', color: 'var(--gold)', marginBottom: '24px', opacity: 0.85 }}>
-                {p.convidados}
-              </p>
-              <div style={{ width: '40px', height: '1px', background: 'rgba(212,184,140,0.5)', marginBottom: '24px' }} />
-              <p style={{ fontSize: '0.95rem', opacity: 0.8, lineHeight: 1.8, marginBottom: '28px', fontWeight: 300 }}>
-                {p.desc}
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, marginBottom: '32px' }}>
-                {p.inclui.map((item, j) => (
-                  <li key={j} style={{ display: 'flex', gap: '12px', padding: '8px 0', fontSize: '0.9rem', opacity: 0.85 }}>
-                    <span style={{ color: 'var(--gold)' }}>◆</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <button onClick={() => document.querySelector('#reservar')?.scrollIntoView({ behavior: 'smooth' })}
-                style={{ display: 'block', width: '100%', textAlign: 'center', padding: '16px', background: p.destaque ? 'var(--gold)' : 'transparent', color: p.destaque ? 'var(--navy)' : '#fff', border: p.destaque ? 'none' : '1px solid rgba(255,255,255,0.3)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer', transition: 'all 0.3s' }}
-                onMouseEnter={e => { if (!p.destaque) { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--navy)' } else { e.currentTarget.style.background = 'var(--gold-dark)' }}}
-                onMouseLeave={e => { if (!p.destaque) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#fff' } else { e.currentTarget.style.background = 'var(--gold)' }}}>
-                Ver Datas Disponíveis
-              </button>
-            </div>
+        {/* Grid de produtos */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px', textAlign: 'left' }}>
+          {PRODUTOS.map((p) => (
+            <ProdutoCard
+              key={p.id}
+              produto={p}
+              onSelect={onSelectProduct}
+              destaque={p.id === 'casamar'}
+            />
           ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CtaFinal() {
+  return (
+    <section className="parallax-bg" style={{
+      height: '60vh', minHeight: '400px',
+      backgroundImage: `url(${IMG.pool})`,
+      position: 'relative',
+    }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(26,35,50,0.6)' }} />
+      <div style={{ position: 'relative', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 24px', color: '#fff' }}>
+        <div style={{ maxWidth: '700px' }}>
+          <p style={{ fontSize: '12px', letterSpacing: '5px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '28px', fontWeight: 600 }}>
+            Escolha seu estilo, simplifique
+          </p>
+          <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 300, lineHeight: 1.5, opacity: 0.9, marginBottom: '32px', letterSpacing: '1px' }}>
+            Você encontra tudo em um lugar só
+          </h2>
+          <p style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontFamily: 'var(--serif)', fontWeight: 300, lineHeight: 1.2, fontStyle: 'italic' }}>
+            Realize seu sonho de casar <span style={{ color: 'var(--gold)' }}>no paraíso!</span>
+          </p>
+          <button onClick={() => document.querySelector('#pacotes')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ marginTop: '40px', padding: '18px 44px', background: 'var(--gold)', color: 'var(--navy)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.3s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--gold-dark)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--gold)'}>
+            Ver Pacotes
+          </button>
         </div>
       </div>
     </section>
@@ -329,28 +516,6 @@ function Galeria() {
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
             />
           ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function Parallax() {
-  return (
-    <section className="parallax-bg" style={{
-      height: '60vh', minHeight: '400px',
-      backgroundImage: `url(${IMG.pool})`,
-      position: 'relative',
-    }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(26,35,50,0.5)' }} />
-      <div style={{ position: 'relative', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 24px', color: '#fff' }}>
-        <div style={{ maxWidth: '700px' }}>
-          <p style={{ fontSize: '11px', letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '24px', fontWeight: 600 }}>
-            Promessa
-          </p>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 300, lineHeight: 1.3, fontStyle: 'italic' }}>
-            "Acreditamos que cada casamento merece um cenário tão único quanto a história dos noivos."
-          </h2>
         </div>
       </div>
     </section>
@@ -466,6 +631,8 @@ function FloatingWhatsApp() {
 }
 
 export default function App() {
+  const [selectedProduct, setSelectedProduct] = useState(null)
+
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual'
@@ -475,6 +642,13 @@ export default function App() {
     }
     window.scrollTo(0, 0)
   }, [])
+
+  const handleSelectProduct = (produto) => {
+    setSelectedProduct(produto)
+    setTimeout(() => {
+      document.querySelector('#reservar')?.scrollIntoView({ behavior: 'smooth' })
+    }, 100)
+  }
 
   return (
     <>
@@ -513,11 +687,11 @@ export default function App() {
         img={IMG.salao}
       />
 
-      <Parallax />
+      <Pacotes onSelectProduct={handleSelectProduct} />
 
-      <Pacotes />
+      <BookingSystem selectedProduct={selectedProduct} onClear={() => setSelectedProduct(null)} />
 
-      <BookingSystem />
+      <CtaFinal />
 
       <Galeria />
 
