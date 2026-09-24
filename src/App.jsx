@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Menu, X, MessageCircle, MapPin, Instagram, ChevronDown } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Menu, X, MessageCircle, MapPin, Instagram, ChevronDown, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import BookingSystem from './BookingSystem.jsx'
 
 const WHATSAPP = 'https://api.whatsapp.com/send?phone=5582988330033&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20a%20Casa%20Mar%20Ipioca.'
@@ -24,9 +24,68 @@ const IMG = {
   sign: './images/casa-sign.jpg',
 }
 
-function Nav({ active }) {
+// ============ REVEAL (animação de entrada ao rolar) ============
+function Reveal({ children, delay = 0, as: Tag = 'div', style = {} }) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true)
+        obs.unobserve(el)
+      }
+    }, { threshold: 0.15 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  const delayClass = delay ? `reveal-d${delay}` : ''
+  return (
+    <Tag ref={ref} className={`reveal ${delayClass} ${visible ? 'is-visible' : ''}`} style={style}>
+      {children}
+    </Tag>
+  )
+}
+
+function ScrollProgress() {
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    const onScroll = () => {
+      const h = document.documentElement
+      const max = h.scrollHeight - h.clientHeight
+      setWidth(max > 0 ? (h.scrollTop / max) * 100 : 0)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  return <div className="scroll-progress" style={{ width: `${width}%` }} />
+}
+
+function useActiveSection(ids) {
+  const [active, setActive] = useState(ids[0])
+  useEffect(() => {
+    const observers = ids.map(id => {
+      const el = document.querySelector(`#${id}`)
+      if (!el) return null
+      const obs = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) setActive(id)
+      }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 })
+      obs.observe(el)
+      return obs
+    })
+    return () => observers.forEach(o => o?.disconnect())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return active
+}
+
+function Nav() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const active = useActiveSection(sections.map(s => s.id))
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -38,6 +97,8 @@ function Nav({ active }) {
     setOpen(false)
     document.querySelector(`#${id}`)?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  const accent = scrolled ? 'var(--gold-dark)' : 'var(--gold)'
 
   return (
     <header style={{
@@ -53,14 +114,24 @@ function Nav({ active }) {
         </a>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '40px' }} className="desktop-nav">
-          {sections.map(s => (
-            <button key={s.id} onClick={() => scrollTo(s.id)}
-              style={{ fontFamily: 'var(--sans)', fontSize: '11px', letterSpacing: '2.5px', textTransform: 'uppercase', fontWeight: 500, color: scrolled ? 'var(--navy)' : '#fff', transition: 'color 0.3s, opacity 0.3s', opacity: 0.85 }}
-              onMouseEnter={e => e.currentTarget.style.opacity = 1}
-              onMouseLeave={e => e.currentTarget.style.opacity = 0.85}>
-              {s.label}
-            </button>
-          ))}
+          {sections.map(s => {
+            const isActive = active === s.id
+            return (
+              <button key={s.id} onClick={() => scrollTo(s.id)}
+                style={{
+                  fontFamily: 'var(--sans)', fontSize: '11px', letterSpacing: '2.5px', textTransform: 'uppercase', fontWeight: 500,
+                  color: isActive ? accent : (scrolled ? 'var(--navy)' : '#fff'),
+                  transition: 'color 0.3s, opacity 0.3s, border-color 0.3s',
+                  opacity: isActive ? 1 : 0.85,
+                  paddingBottom: '4px',
+                  borderBottom: `1px solid ${isActive ? accent : 'transparent'}`,
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                onMouseLeave={e => e.currentTarget.style.opacity = isActive ? 1 : 0.85}>
+                {s.label}
+              </button>
+            )
+          })}
           <button onClick={() => scrollTo('reservar')}
             style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 500, padding: '12px 24px', border: `1px solid ${scrolled ? 'var(--navy)' : '#fff'}`, color: scrolled ? 'var(--navy)' : '#fff', background: 'transparent', transition: 'all 0.3s' }}
             onMouseEnter={e => { e.currentTarget.style.background = scrolled ? 'var(--navy)' : '#fff'; e.currentTarget.style.color = scrolled ? '#fff' : 'var(--navy)' }}
@@ -117,24 +188,24 @@ function Hero() {
       }} />
 
       <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#fff', padding: '0 24px' }}>
-        <div className="fade-up" style={{ maxWidth: '900px' }}>
-          <p style={{ fontSize: '12px', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '28px', opacity: 0.85, fontWeight: 500 }}>
+        <div style={{ maxWidth: '900px' }}>
+          <p className="fade-up" style={{ fontSize: '12px', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '28px', opacity: 0.85, fontWeight: 500 }}>
             Ipioca · Maceió · Alagoas
           </p>
-          <h1 style={{ fontSize: 'clamp(3rem, 8vw, 6.5rem)', fontWeight: 300, lineHeight: 1.05, marginBottom: '32px', letterSpacing: '-1px' }}>
+          <h1 className="fade-up-delay-1" style={{ fontSize: 'clamp(3rem, 8vw, 6.5rem)', fontWeight: 300, lineHeight: 1.05, marginBottom: '32px', letterSpacing: '-1px' }}>
             <span style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Casamentos</span><br />
             à beira-mar
           </h1>
-          <p style={{ fontSize: 'clamp(1rem, 1.4vw, 1.15rem)', maxWidth: '560px', margin: '0 auto 48px', opacity: 0.9, fontWeight: 300, lineHeight: 1.8 }}>
+          <p className="fade-up-delay-1" style={{ fontSize: 'clamp(1rem, 1.4vw, 1.15rem)', maxWidth: '560px', margin: '0 auto 48px', opacity: 0.9, fontWeight: 300, lineHeight: 1.8 }}>
             Uma casa dos anos 60 à beira-mar, uma capela no único jardim de lúpulo beira-mar do planeta e um salão modulável.
             Três cenários únicos no mesmo paraíso, prontos para receber o dia mais importante da sua vida.
           </p>
-          <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => document.querySelector('#reservar')?.scrollIntoView({ behavior: 'smooth' })}
+          <div className="fade-up-delay-2" style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="btn-arrow" onClick={() => document.querySelector('#reservar')?.scrollIntoView({ behavior: 'smooth' })}
               style={{ padding: '18px 44px', background: 'var(--gold)', color: 'var(--navy)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.3s' }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--gold-dark)'}
               onMouseLeave={e => e.currentTarget.style.background = 'var(--gold)'}>
-              Reservar Data
+              Reservar Data <ArrowRight size={15} />
             </button>
             <button onClick={() => document.querySelector('#villa')?.scrollIntoView({ behavior: 'smooth' })}
               style={{ padding: '18px 44px', background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 500, transition: 'all 0.3s' }}
@@ -157,7 +228,7 @@ function Hero() {
 function Intro() {
   return (
     <section style={{ padding: 'clamp(80px, 12vw, 160px) 24px', background: 'var(--ivory)', textAlign: 'center' }}>
-      <div style={{ maxWidth: '780px', margin: '0 auto' }}>
+      <Reveal style={{ maxWidth: '780px', margin: '0 auto' }}>
         <p style={{ fontSize: '11px', letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '32px', fontWeight: 600 }}>
           Bem-vindos à
         </p>
@@ -173,6 +244,33 @@ function Intro() {
           A Casa Mar reúne em um só endereço uma casa dos anos 60 preservada, uma capela íntima
           no único jardim de lúpulo beira-mar do planeta e um salão modulável — três cenários únicos, a poucos passos do mar.
         </p>
+      </Reveal>
+    </section>
+  )
+}
+
+// ============ DIFERENCIAIS ============
+const STATS = [
+  { num: '3', label: 'Cenários únicos no mesmo endereço' },
+  { num: '700', label: 'Convidados no salão modulável' },
+  { num: 'Anos 60', label: 'Casa histórica preservada à beira-mar' },
+  { num: '1º', label: 'Jardim de lúpulo à beira-mar do planeta' },
+]
+
+function Stats() {
+  return (
+    <section style={{ padding: 'clamp(48px, 7vw, 90px) 24px', background: 'var(--navy)' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '32px' }}>
+        {STATS.map((s, i) => (
+          <Reveal key={s.label} delay={(i % 5) + 1} style={{ textAlign: 'center' }}>
+            <p style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 'clamp(2.2rem, 4vw, 3.2rem)', color: 'var(--gold)', marginBottom: '10px', fontWeight: 300 }}>
+              {s.num}
+            </p>
+            <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>
+              {s.label}
+            </p>
+          </Reveal>
+        ))}
       </div>
     </section>
   )
@@ -180,9 +278,15 @@ function Intro() {
 
 function Espaco({ id, num, titulo, subtitulo, desc, destaques, img, reverse }) {
   return (
-    <section id={id} style={{ padding: 'clamp(60px, 10vw, 120px) 24px', background: reverse ? 'var(--cream)' : 'var(--ivory)' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(40px, 6vw, 100px)', alignItems: 'center' }} className="espaco-grid">
-        <div style={{ order: reverse ? 2 : 1 }}>
+    <section id={id} style={{ padding: 'clamp(60px, 10vw, 120px) 24px', background: reverse ? 'var(--cream)' : 'var(--ivory)', position: 'relative', overflow: 'hidden' }}>
+      <span className="ghost-num" aria-hidden="true" style={{
+        fontSize: 'clamp(9rem, 20vw, 18rem)',
+        top: 'clamp(-30px, -4vw, 0px)',
+        [reverse ? 'right' : 'left']: 'clamp(4px, 2vw, 40px)',
+      }}>{num}</span>
+
+      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(40px, 6vw, 100px)', alignItems: 'center', position: 'relative', zIndex: 1 }} className="espaco-grid">
+        <Reveal style={{ order: reverse ? 2 : 1 }}>
           <p style={{ fontSize: '11px', letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '20px', fontWeight: 600 }}>
             {num} — {subtitulo}
           </p>
@@ -201,12 +305,19 @@ function Espaco({ id, num, titulo, subtitulo, desc, destaques, img, reverse }) {
               </li>
             ))}
           </ul>
-        </div>
-        <div style={{ order: reverse ? 1 : 2, position: 'relative' }}>
-          <div style={{ width: '100%', aspectRatio: '4/5', backgroundImage: `url(${img})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
+        </Reveal>
+        <Reveal delay={2} style={{ order: reverse ? 1 : 2, position: 'relative' }}>
+          <div style={{ width: '100%', aspectRatio: '4/5', overflow: 'hidden', position: 'relative' }}>
+            <div style={{
+              width: '100%', height: '100%', backgroundImage: `url(${img})`, backgroundSize: 'cover', backgroundPosition: 'center',
+              transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            />
             <div style={{ position: 'absolute', [reverse ? 'left' : 'right']: '-20px', bottom: '-20px', width: '80px', height: '80px', border: '2px solid var(--gold)', zIndex: -1 }} />
           </div>
-        </div>
+        </Reveal>
       </div>
 
       <style>{`
@@ -228,7 +339,7 @@ function CtaFinal() {
     }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(26,35,50,0.6)' }} />
       <div style={{ position: 'relative', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 24px', color: '#fff' }}>
-        <div style={{ maxWidth: '700px' }}>
+        <Reveal style={{ maxWidth: '700px' }}>
           <p style={{ fontSize: '12px', letterSpacing: '5px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '28px', fontWeight: 600 }}>
             Escolha seu estilo, simplifique
           </p>
@@ -238,91 +349,142 @@ function CtaFinal() {
           <p style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontFamily: 'var(--serif)', fontWeight: 300, lineHeight: 1.2, fontStyle: 'italic' }}>
             Realize seu sonho de casar <span style={{ color: 'var(--gold)' }}>no paraíso!</span>
           </p>
-          <button onClick={() => document.querySelector('#reservar')?.scrollIntoView({ behavior: 'smooth' })}
+          <button className="btn-arrow" onClick={() => document.querySelector('#reservar')?.scrollIntoView({ behavior: 'smooth' })}
             style={{ marginTop: '40px', padding: '18px 44px', background: 'var(--gold)', color: 'var(--navy)', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.3s' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--gold-dark)'}
             onMouseLeave={e => e.currentTarget.style.background = 'var(--gold)'}>
-            Reservar Data
+            Reservar Data <ArrowRight size={15} />
           </button>
-        </div>
+        </Reveal>
       </div>
     </section>
+  )
+}
+
+function Lightbox({ images, index, onClose, onNav }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowRight') onNav(1)
+      if (e.key === 'ArrowLeft') onNav(-1)
+    }
+    window.addEventListener('keydown', onKey)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [onClose, onNav])
+
+  return (
+    <div className="lightbox-overlay" onClick={onClose}>
+      <button onClick={e => { e.stopPropagation(); onClose() }} aria-label="Fechar"
+        style={{ position: 'absolute', top: 'clamp(12px, 3vw, 28px)', right: 'clamp(12px, 3vw, 28px)', color: '#fff', padding: '10px' }}>
+        <X size={28} />
+      </button>
+      <button onClick={e => { e.stopPropagation(); onNav(-1) }} aria-label="Imagem anterior"
+        style={{ position: 'absolute', left: 'clamp(6px, 2vw, 28px)', top: '50%', transform: 'translateY(-50%)', color: '#fff', padding: '10px' }}>
+        <ChevronLeft size={32} />
+      </button>
+      <img src={images[index]} alt={`Casa Mar Ipioca — foto ${index + 1}`} className="lightbox-img" onClick={e => e.stopPropagation()} />
+      <button onClick={e => { e.stopPropagation(); onNav(1) }} aria-label="Próxima imagem"
+        style={{ position: 'absolute', right: 'clamp(6px, 2vw, 28px)', top: '50%', transform: 'translateY(-50%)', color: '#fff', padding: '10px' }}>
+        <ChevronRight size={32} />
+      </button>
+    </div>
   )
 }
 
 function Galeria() {
   const imgs = [IMG.hero, IMG.villa, IMG.capela, IMG.salao, IMG.pool, IMG.noite]
+  const [lightboxIndex, setLightboxIndex] = useState(null)
+
+  const navigate = useCallback((dir) => {
+    setLightboxIndex(prev => prev === null ? prev : (prev + dir + imgs.length) % imgs.length)
+  }, [imgs.length])
+
   return (
     <section id="galeria" style={{ padding: 'clamp(80px, 12vw, 160px) 24px', background: 'var(--ivory)' }}>
       <div style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center' }}>
-        <p style={{ fontSize: '11px', letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '28px', fontWeight: 600 }}>
-          Momentos
-        </p>
-        <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: 'var(--navy)', marginBottom: '28px', fontWeight: 300 }}>
-          <span style={{ fontStyle: 'italic' }}>Galeria</span>
-        </h2>
-        <div style={{ width: '60px', height: '1px', background: 'var(--gold)', margin: '0 auto 80px' }} />
+        <Reveal>
+          <p style={{ fontSize: '11px', letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '28px', fontWeight: 600 }}>
+            Momentos
+          </p>
+          <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: 'var(--navy)', marginBottom: '28px', fontWeight: 300 }}>
+            <span style={{ fontStyle: 'italic' }}>Galeria</span>
+          </h2>
+          <div style={{ width: '60px', height: '1px', background: 'var(--gold)', margin: '0 auto 80px' }} />
+        </Reveal>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
           {imgs.map((src, i) => (
-            <div key={i} style={{ aspectRatio: i % 3 === 0 ? '3/4' : '1/1', backgroundImage: `url(${src})`, backgroundSize: 'cover', backgroundPosition: 'center', transition: 'transform 0.5s', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-            />
+            <Reveal key={i} delay={(i % 5) + 1} style={{ aspectRatio: i % 3 === 0 ? '3/4' : '1/1', overflow: 'hidden' }}>
+              <button onClick={() => setLightboxIndex(i)} aria-label="Ampliar imagem"
+                style={{ width: '100%', height: '100%', backgroundImage: `url(${src})`, backgroundSize: 'cover', backgroundPosition: 'center', transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              />
+            </Reveal>
           ))}
         </div>
       </div>
+
+      {lightboxIndex !== null && (
+        <Lightbox images={imgs} index={lightboxIndex} onClose={() => setLightboxIndex(null)} onNav={navigate} />
+      )}
     </section>
   )
 }
 
 function Contato() {
+  const cards = [
+    { icon: MessageCircle, label: 'WhatsApp', content: <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" style={{ fontSize: '1rem', color: 'var(--navy)', fontFamily: 'var(--serif)' }}>{WHATSAPP_NUMBER}</a> },
+    { icon: MapPin, label: 'Localização', content: <p style={{ fontSize: '1rem', color: 'var(--navy)', fontFamily: 'var(--serif)' }}>Praia de Ipioca<br />Maceió — AL</p> },
+    { icon: Instagram, label: 'Instagram', content: <a href="https://instagram.com/casamaripioca" target="_blank" rel="noopener noreferrer" style={{ fontSize: '1rem', color: 'var(--navy)', fontFamily: 'var(--serif)' }}>@casamaripioca</a> },
+  ]
+
   return (
     <section id="contato" style={{ padding: 'clamp(80px, 12vw, 160px) 24px', background: 'var(--cream)' }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
-        <p style={{ fontSize: '11px', letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '28px', fontWeight: 600 }}>
-          Agende uma visita
-        </p>
-        <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: 'var(--navy)', marginBottom: '28px', fontWeight: 300, lineHeight: 1.1 }}>
-          Vamos <span style={{ fontStyle: 'italic' }}>conversar</span>
-        </h2>
-        <div style={{ width: '60px', height: '1px', background: 'var(--gold)', margin: '0 auto 36px' }} />
-        <p style={{ maxWidth: '560px', margin: '0 auto 60px', color: 'var(--text-muted)', lineHeight: 1.8, fontSize: '1.05rem', fontWeight: 300 }}>
-          Entre em contato e agende uma visita guiada à Casa Mar.
-          Nossa equipe está pronta para tornar o seu dia inesquecível.
-        </p>
+        <Reveal>
+          <p style={{ fontSize: '11px', letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--gold-dark)', marginBottom: '28px', fontWeight: 600 }}>
+            Agende uma visita
+          </p>
+          <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: 'var(--navy)', marginBottom: '28px', fontWeight: 300, lineHeight: 1.1 }}>
+            Vamos <span style={{ fontStyle: 'italic' }}>conversar</span>
+          </h2>
+          <div style={{ width: '60px', height: '1px', background: 'var(--gold)', margin: '0 auto 36px' }} />
+          <p style={{ maxWidth: '560px', margin: '0 auto 60px', color: 'var(--text-muted)', lineHeight: 1.8, fontSize: '1.05rem', fontWeight: 300 }}>
+            Entre em contato e agende uma visita guiada à Casa Mar.
+            Nossa equipe está pronta para tornar o seu dia inesquecível.
+          </p>
+        </Reveal>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '32px', marginBottom: '60px' }}>
-          <div style={{ padding: '32px', background: '#fff', textAlign: 'center' }}>
-            <MessageCircle size={28} style={{ color: 'var(--gold-dark)', margin: '0 auto 16px' }} />
-            <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--text-subtle)', marginBottom: '12px' }}>WhatsApp</p>
-            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" style={{ fontSize: '1rem', color: 'var(--navy)', fontFamily: 'var(--serif)' }}>
-              {WHATSAPP_NUMBER}
-            </a>
-          </div>
-          <div style={{ padding: '32px', background: '#fff', textAlign: 'center' }}>
-            <MapPin size={28} style={{ color: 'var(--gold-dark)', margin: '0 auto 16px' }} />
-            <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--text-subtle)', marginBottom: '12px' }}>Localização</p>
-            <p style={{ fontSize: '1rem', color: 'var(--navy)', fontFamily: 'var(--serif)' }}>
-              Praia de Ipioca<br />Maceió — AL
-            </p>
-          </div>
-          <div style={{ padding: '32px', background: '#fff', textAlign: 'center' }}>
-            <Instagram size={28} style={{ color: 'var(--gold-dark)', margin: '0 auto 16px' }} />
-            <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--text-subtle)', marginBottom: '12px' }}>Instagram</p>
-            <a href="https://instagram.com/casamaripioca" target="_blank" rel="noopener noreferrer" style={{ fontSize: '1rem', color: 'var(--navy)', fontFamily: 'var(--serif)' }}>
-              @casamaripioca
-            </a>
-          </div>
+          {cards.map((c, i) => (
+            <Reveal key={c.label} delay={i + 1} style={{ padding: '32px', background: '#fff', textAlign: 'center', transition: 'transform 0.4s, box-shadow 0.4s' }}>
+              <div
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(26,35,50,0.1)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+                style={{ transition: 'transform 0.4s, box-shadow 0.4s' }}>
+                <c.icon size={28} style={{ color: 'var(--gold-dark)', margin: '0 auto 16px' }} />
+                <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--text-subtle)', marginBottom: '12px' }}>{c.label}</p>
+                {c.content}
+              </div>
+            </Reveal>
+          ))}
         </div>
 
-        <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '22px 56px', background: 'var(--navy)', color: '#fff', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, transition: 'all 0.3s' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--navy-soft)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'var(--navy)'}>
-          <MessageCircle size={18} />
-          Falar Agora no WhatsApp
-        </a>
+        <Reveal delay={4}>
+          <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-arrow"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '22px 56px', background: 'var(--navy)', color: '#fff', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600, transition: 'all 0.3s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--navy-soft)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--navy)'}>
+            <MessageCircle size={18} />
+            Falar Agora no WhatsApp
+          </a>
+        </Reveal>
       </div>
     </section>
   )
@@ -397,9 +559,11 @@ export default function App() {
 
   return (
     <>
+      <ScrollProgress />
       <Nav />
       <Hero />
       <Intro />
+      <Stats />
 
       <Espaco
         id="villa"
